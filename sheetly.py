@@ -23,6 +23,7 @@ from matplotlib.patches import Circle
 
 class Sheetly:
 
+    VERSION = 1.0
     _LETTERS = ['A','B','C','D','E','F','G']
     _NUMBERS = [n for n in range(1,7)]
     
@@ -31,22 +32,30 @@ class Sheetly:
     _CLEF_LINES = 5
     
     def __init__(self):
+        self.notes = self._notes()
+
+        # bass clef bounds
+        self.bmin = 0
+        self.bmax = (self._CLEF_LINES - 1)*self._LINESPACE
+
+        # treble clef bounds
+        self.tmin = self.bmax + 10
+        self.tmax = self.tmin + (self._CLEF_LINES - 1)*self._LINESPACE
+
+        # range of allowed treble and bass note vertical positions
         self.treb_range = self._treb_range()
         self.bass_range = self._bass_range()
-        self.notes = self._notes()
-                
-        self.bmin = 0
-        self.bmax = self._CLEF_LINES*self._LINESPACE
-        self.tmin = self.bmax + 10
-        self.tmax = self.tmin + self._CLEF_LINES*self._LINESPACE
+
+        # related to state control
         self.running = True
         self.drawings = []
     
     def _treb_range(self):
-        return [(i+self._STAFF_GAP)*self._LINESPACE for i in range(-1,7)]
+        return [i+self.bmax+self._STAFF_GAP 
+                   for i in range(-2*self._LINESPACE,7*self._LINESPACE)]
     
     def _bass_range(self):
-        return [(i)*self._LINESPACE for i in range(-1,6)]
+        return list(range(-2*self._LINESPACE, int(7*self._LINESPACE)))
     
     def _notes(self):
         return [f"{a}{n}" for n in self._NUMBERS for a in self._LETTERS]
@@ -73,10 +82,10 @@ class Sheetly:
 
         fig, ax = plt.subplots()
 
-        for i in np.arange(self.bmin,self.bmax,self._LINESPACE):
+        for i in np.arange(self.bmin,self.bmax+1,self._LINESPACE):
             ax.axhline(i,c='k')
             
-        for i in np.arange(self.tmin,self.tmax,self._LINESPACE):
+        for i in np.arange(self.tmin,self.tmax+1,self._LINESPACE):
             ax.axhline(i,c='k')
 
         ax.set_aspect('equal')
@@ -111,23 +120,64 @@ class Sheetly:
                                 ,color='k'))
             self.drawings.append(patch)
             
-            line = None
-            if y in self.bass_range:
-                if y < self.bmin-0.5*self._LINESPACE or y > self.bmax-0.5*self._LINESPACE:
-                    line = ax.axhline(y,
-                               xmin=(x-.75*self._LINESPACE)/xspan, 
-                               xmax=(x+.75*self._LINESPACE)/xspan, 
-                               c='k')
+            ticks = None # no extra "ticks" to draw; note appears in the clef
+
+            use_treb = False
+            use_bass = False
+            if y in self.bass_range and y in self.treb_range:
+                if np.floor(rand.random()+0.5):
+                    use_bass = True
+                else:
+                    use_treb = True
+    
+            # TODO: fix logic for when y is in both treble and bass ranges
+            if y in self.bass_range or use_bass:
+                if y < self.bmin-0.5*self._LINESPACE:
+                    ticks = (self.bmin - y) // self._LINESPACE
+                    tick_ylist = [self.bmin - (i+1)*self._LINESPACE for i in range(ticks)]
+                elif y > self.bmax-0.5*self._LINESPACE:
+                    ticks = (y - self.bmax) // self._LINESPACE
+                    tick_ylist = [self.bmax + (i+1)*self._LINESPACE for i in range(ticks)]
+                if ticks:
+                    for tick_y in tick_ylist:
+                        line = ax.axhline(tick_y,
+                                   xmin=(x-.75*self._LINESPACE)/xspan, 
+                                   xmax=(x+.75*self._LINESPACE)/xspan, 
+                                   c='k')
+                        self.drawings.append(line)
                 
-            if y in self.treb_range:
-                if y < self.tmin-0.5*self._LINESPACE or y > self.tmax-0.5*self._LINESPACE:
-                    line = ax.axhline(y,
-                               xmin=(x-.75*self._LINESPACE)/xspan, 
-                               xmax=(x+.75*self._LINESPACE)/xspan, 
-                               c='k')
+            if y in self.treb_range or use_treb:
+                if y < self.tmin-0.5*self._LINESPACE:
+                    ticks = (self.tmin - y) // self._LINESPACE
+                    tick_ylist = [self.tmin - (i+1)*self._LINESPACE for i in range(ticks)]
+                elif y > self.tmax-0.5*self._LINESPACE:
+                    ticks = (y - self.tmax) // self._LINESPACE
+                    tick_ylist = [self.tmax + (i+1)*self._LINESPACE for i in range(ticks)]
+                if ticks:
+                    for tick_y in tick_ylist:
+                        line = ax.axhline(tick_y,
+                                   xmin=(x-.75*self._LINESPACE)/xspan, 
+                                   xmax=(x+.75*self._LINESPACE)/xspan, 
+                                   c='k')
+                        self.drawings.append(line)
+
+            # line = None
+            # if y in self.bass_range:
+                # if y < self.bmin-0.5*self._LINESPACE or y > self.bmax-0.5*self._LINESPACE:
+                    # line = ax.axhline(y,
+                               # xmin=(x-.75*self._LINESPACE)/xspan, 
+                               # xmax=(x+.75*self._LINESPACE)/xspan, 
+                               # c='k')
+                
+            # if y in self.treb_range:
+                # if y < self.tmin-0.5*self._LINESPACE or y > self.tmax-0.5*self._LINESPACE:
+                    # line = ax.axhline(y,
+                               # xmin=(x-.75*self._LINESPACE)/xspan, 
+                               # xmax=(x+.75*self._LINESPACE)/xspan, 
+                               # c='k')
             
-            if line:
-                self.drawings.append(line)
+            # if line:
+                # self.drawings.append(line)
         
             
     def get_rand_note(self):
@@ -180,11 +230,14 @@ class Sheetly:
         # could write answers and responses to file for generating
         # learning stats
         pass
-        
+
+
 if __name__ == '__main__':
 
     sheet = Sheetly()
     fig, ax = sheet.draw_staff()
+    fig.canvas.set_window_title(f'Sheetly v{sheet.VERSION}')
+    fig.canvas.draw()
 
     plt.show(block=False)
 
