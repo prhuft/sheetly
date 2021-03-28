@@ -60,18 +60,18 @@ class Sheetly:
     def _notes(self):
         return [f"{a}{n}" for n in self._NUMBERS for a in self._LETTERS]
 
-    
+    # TODO: make these functions are not in terms of the linespace
     def treb_y(self,y):
         """
         return treble note associated with y value
         """
-        return self._LETTERS[y % 7 - 2] + str((y-2)//7+2)
+        return self._LETTERS[y % 7] + str((y-2)//7+2)
     
     def bass_y(self,y):
         """
         return bass note associated with y value
         """
-        return self._LETTERS[y % 7 - 1] + str(y//7+2)
+        return self._LETTERS[y % 7 - 1] + str(y//7+3)
 
     def draw_staff(self, xbounds=[0,20],ybounds=[-3,17],axis=False):
         """
