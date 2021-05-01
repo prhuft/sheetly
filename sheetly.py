@@ -159,26 +159,7 @@ class Sheetly:
                                    xmin=(x-.75*self._LINESPACE)/xspan, 
                                    xmax=(x+.75*self._LINESPACE)/xspan, 
                                    c='k')
-                        self.drawings.append(line)
-
-            # line = None
-            # if y in self.bass_range:
-                # if y < self.bmin-0.5*self._LINESPACE or y > self.bmax-0.5*self._LINESPACE:
-                    # line = ax.axhline(y,
-                               # xmin=(x-.75*self._LINESPACE)/xspan, 
-                               # xmax=(x+.75*self._LINESPACE)/xspan, 
-                               # c='k')
-                
-            # if y in self.treb_range:
-                # if y < self.tmin-0.5*self._LINESPACE or y > self.tmax-0.5*self._LINESPACE:
-                    # line = ax.axhline(y,
-                               # xmin=(x-.75*self._LINESPACE)/xspan, 
-                               # xmax=(x+.75*self._LINESPACE)/xspan, 
-                               # c='k')
-            
-            # if line:
-                # self.drawings.append(line)
-        
+                        self.drawings.append(line)        
             
     def get_rand_note(self):
         """
@@ -246,6 +227,14 @@ if __name__ == '__main__':
         cheats = True
     else:
         cheats = False
+
+    mode = input("Hard? h for hard, anything for easy.")
+    if mode != 'h':
+        # constrain the range
+        clip = 2
+        sheet.bass_range = sheet.bass_range[clip:-clip]
+        sheet.treb_range = sheet.treb_range[clip:-clip]
+        
 
     print("type q to quit at any time.")
 
